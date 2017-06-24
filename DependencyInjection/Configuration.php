@@ -1,6 +1,6 @@
 <?php
 
-namespace Evirtua\SyliusMolliePayumBundle\DependencyInjection;
+namespace Evirtua\SyliusPagseguroPayumBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;

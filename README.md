@@ -1,6 +1,6 @@
-# SyliusMolliePayumBundle
+# SyliusPagseguroPayumBundle
 
-Welcome to the SyliusMolliePayumBundle - a Payum implementation of the Mollie gateway to use in your Sylius (~beta) webshop.
+Welcome to the SyliusPagseguroPayumBundle - a Payum implementation of the UOL Pagseguro gateway to use in your Sylius (~beta) webshop.
 
 For details on how to get started with SyliusMolliePayumBundle, keep on reading.
 
@@ -14,7 +14,7 @@ Edit your composer.json to include the bundle as a dependency.
 ```js
 {
     "require": {
-        "axelvnk/sylius-mollie-payum-bundle": "dev-master",
+        "evirtua/sylius-pagseguro-payum-bundle": "dev-master",
     }
 }
 ```
@@ -22,7 +22,7 @@ Edit your composer.json to include the bundle as a dependency.
 Open up a command line window and tell composer to download the new dependency.
 
 ``` bash
-$ php composer.phar update axelvnk/sylius-mollie-payum-bundle
+$ php composer.phar update evirtua/sylius-pagseguro-payum-bundle
 ```
 
 ### Step 2 - Register the bundle in your AppKernel file
@@ -37,7 +37,7 @@ public function registerBundles()
 {
     $bundles = array(
         ...
-        new Axelvnk\SyliusMolliePayumBundle\SyliusMolliePayumBundle(),
+        new Evirtua\SyliusPagseguroPayumBundle\SyliusMolliePayumBundle(),
     );
 }
 ```
@@ -48,7 +48,7 @@ public function registerBundles()
 // app/config/config.yml
 
 imports:
-    - { resource: "@SyliusMolliePayumBundle/Resources/config/config.yml" }
+    - { resource: "@SyliusPagseguroPayumBundle/Resources/config/config.yml" }
 
 ```
 
@@ -58,17 +58,19 @@ imports:
 // app/config/parameters.yml
 
 parameters:
-    axelvnk.payum.mollie_api_key: YOUR_API_KEY
+    evirtua.payum.pagseguro.token: YOUR_TOKEN
+    evirtua.payum.pagseguro.email: YOUR_EMAIL
+    evirtua.payum.pagseguro.sandbox: true|false
 
 ```
 
 ### Step 5 - Add gateway config to Sylius database
-This is just necessary to be able to select 'mollie' as a gateway for your payment methods through the admin interface. The config and factory name aren't even used, so don't worry about being correct.
+This is just necessary to be able to select 'pagseguro' as a gateway for your payment methods through the admin interface. The config and factory name aren't even used, so don't worry about being correct.
 
 
 ``` sql
 INSERT INTO `sylius_gateway_config` (`config`, `gateway_name`, `factory_name`)
-VALUES ('a:1:{s:6:\"apiKey\";s:35:\"test_xxxxxxxxxxxxxxxxxxxxxxxxx\";}', 'mollie', 'axelvnk_mollie');
+VALUES ('a:1:{s:5:\"token\";s:32:\"xxxxxxxxxxxxxxxxxxxxxxxxx\";}', 'pagseguro', 'evirtua_pagseguro');
 ```
 
 ## Modifying default behavior
@@ -79,10 +81,10 @@ You can always change behavior by changing the parameter value for the classes.
 // app/config/parameters.yml
 
 parameters:
-    axelvnk.payum.action.capture.class: Your\Own\CaptureAction
-    axelvnk.payum.action.status.class: Your\Own\StatusAction
-    axelvnk.payum.action.notify.class: Your\Own\NotifyAction
-    axelvnk.payum.action.resolve_next_route.class: Your\Own\ResolveNextRouteAction
+    evirtua.payum.action.capture.class: Your\Own\CaptureAction
+    evirtua.payum.action.status.class: Your\Own\StatusAction
+    evirtua.payum.action.notify.class: Your\Own\NotifyAction
+    evirtua.payum.action.resolve_next_route.class: Your\Own\ResolveNextRouteAction
 ```
 
 ## Nice to know..
