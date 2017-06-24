@@ -1,6 +1,6 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum\Action;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
 use Axelvnk\SyliusMolliePayumBundle\Payum\Api;
 use Payum\Core\Action\ActionInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum\Action;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
 use Payum\Core\Action\ActionInterface;
 use Sylius\Bundle\PayumBundle\Request\ResolveNextRoute;

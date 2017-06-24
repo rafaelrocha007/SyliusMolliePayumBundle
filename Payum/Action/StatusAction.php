@@ -1,6 +1,6 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum\Action;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Payum\Core\Request\GetStatusInterface;

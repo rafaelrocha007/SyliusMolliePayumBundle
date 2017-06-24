@@ -1,18 +1,18 @@
 {
-    "name": "axelvnk/sylius-mollie-payum-bundle",
+    "name": "evirtua/sylius-pagseguro-payum-bundle",
     "type": "symfony-bundle",
-    "description": "A Mollie payment gateway implementation for use in a Sylius webshop with Payum.",
+    "description": "A PagSeguro payment gateway implementation for use in a Sylius webshop with Payum.",
     "license": "MIT",
     "authors": [
         {
-            "name": "Axel Vankrunkelsven",
-            "email": "axel@digilabs.be",
-            "homepage": "http://www.digilabs.be",
+            "name": "Rafael Rocha",
+            "email": "rafael.rocha.mg@gmail.com",
+            "homepage": "http://rafaelrocha.pro.br",
             "role": "Developer"
         }
     ],
     "support": {
-        "email": "axel@digilabs.be"
+        "email": "rafael.rocha.mg@gmail.com"
     },
     "minimum-stability": "dev",
     "require": {
@@ -21,9 +21,9 @@
         "sylius/sylius": "^1.0@beta",
         "payum/payum": "^1.3",
         "payum/payum-bundle": "^2.1",
-        "mollie/mollie-api-php": "~1.9"
+        "pagseguro/pagseguro-php-sdk": "dev-master"
     },
     "autoload": {
-        "psr-4": { "Axelvnk\\SyliusMolliePayumBundle\\": "" }
+        "psr-4": { "Evirtua\\SyliusPagseguroPayumBundle\\": "" }
     }
 }

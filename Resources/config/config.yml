@@ -1,10 +1,22 @@
+parameters:
+    evirtua.payum.pagseguro.token: EDITME
+    evirtua.payum.pagseguro.email: EDITME
+    evirtua.payum.pagseguro.sandbox: true
+    evirtua.payum.api.pagseguro.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Api
+    evirtua.payum.action.capture.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\CaptureAction
+    evirtua.payum.action.status.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\StatusAction
+    evirtua.payum.action.notify.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\NotifyAction
+    evirtua.payum.action.resolve_next_route.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\ResolveNextRouteAction
+
 payum:
     gateways:
-        mollie:
+        pagseguro:
             factory: core
-            apiKey: '%axelvnk.payum.mollie_api_key%'
-            payum.action.capture: '@axelvnk.payum.action.capture'
-            payum.action.notify: '@axelvnk.payum.action.notify'
-            payum.action.status: '@axelvnk.payum.action.status'
-            payum.action.resolve_next_route: '@axelvnk.payum.action.resolve_next_route'
-            payum.api: '@axelvnk.payum.api.mollie'
+            token: '%evirtua.payum.pagseguro.token%'
+            email: '%evirtua.payum.pagseguro.email%'
+            sandbox: true
+            payum.action.capture: '@evirtua.payum.action.capture'
+            payum.action.notify: '@evirtua.payum.action.notify'
+            payum.action.status: '@evirtua.payum.action.status'
+            payum.action.resolve_next_route: '@evirtua.payum.action.resolve_next_route'
+            payum.api: '@evirtua.payum.api.pagseguro'

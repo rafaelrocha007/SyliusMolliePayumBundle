@@ -1,6 +1,6 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\DependencyInjection;
+namespace Evirtua\SyliusMolliePayumBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -10,7 +10,7 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('sylius_mollie_payum');
+        $rootNode = $treeBuilder->root('sylius_pagseguro_payum');
 
         return $treeBuilder;
     }

@@ -1,8 +1,8 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum;
 
-use Mollie_API_Client;
+use PagSeguro\Configuration;
 use Sylius\Component\Core\Model\PaymentInterface;
 
 class Api

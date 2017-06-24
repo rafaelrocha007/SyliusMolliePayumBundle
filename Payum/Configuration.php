@@ -1,8 +1,8 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum;
 
 class Configuration
 {
-    const GATEWAY_NAME = 'mollie';
+    const GATEWAY_NAME = 'pagseguro';
 }

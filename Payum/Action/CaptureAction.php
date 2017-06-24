@@ -1,8 +1,8 @@
 <?php
 
-namespace Axelvnk\SyliusMolliePayumBundle\Payum\Action;
+namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
-use Axelvnk\SyliusMolliePayumBundle\Payum\Configuration;
+use Evirtua\SyliusPagseguroPayumBundle\Payum\Configuration;
 use Doctrine\ORM\EntityManager;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
