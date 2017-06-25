@@ -21,6 +21,8 @@ class Api
      * @param $token
      * @param $email
      * @param $sandbox
+     * @param $storeUrl
+     * @param $notificationUrl
      */
     public function __construct($token, $email, $sandbox, $storeUrl, $notificationUrl)
     {
@@ -36,14 +38,6 @@ class Api
         \PagSeguro\Configuration\Configure::setAccountCredentials($email, $token);
     }
 
-    /**
-     * @param float $amount
-     * @param string $description
-     * @param string $redirectUrl
-     * @param string $webhookUrl
-     * @param PaymentInterface $payment
-     * @return array
-     */
     public function createPaymentRequest(Order $order)
     {
 
@@ -75,16 +69,16 @@ class Api
         $payment->setSender()->setName($order->getCustomer()->getFullName());
         $payment->setSender()->setEmail($order->getCustomer()->getEmail());
         $payment->setSender()->setPhone()->withParameters(
-            substr($order->getCustomer()->getPhoneNumber(),0,2),
+            substr($order->getCustomer()->getPhoneNumber(), 0, 2),
             $order->getCustomer()->getPhoneNumber()
         );
         $payment->setSender()->setDocument()->withParameters(
             'CPF',
-            'insira um numero de CPF valido'
+            $order->getCustomer()->getCpf()
         );
 
         $payment->setShipping()->setAddress()->withParameters(
-            'Av. Brig. Faria Lima',
+            $order->getCustomer()->getDefaultAddress()->getStreet(),
             '1384',
             'Jardim Paulistano',
             '01452002',
@@ -96,70 +90,28 @@ class Api
         $payment->setShipping()->setCost()->withParameters(20.00);
         $payment->setShipping()->setType()->withParameters(\PagSeguro\Enum\Shipping\Type::SEDEX);
 
-//Add metadata items
-        $payment->addMetadata()->withParameters('PASSENGER_CPF', 'insira um numero de CPF valido');
-        $payment->addMetadata()->withParameters('GAME_NAME', 'DOTA');
-        $payment->addMetadata()->withParameters('PASSENGER_PASSPORT', '23456', 1);
-
-//Add items by parameter
-//On index, you have to pass in parameter: total items plus one.
-        $payment->addParameter()->withParameters('itemId', '0003')->index(3);
-        $payment->addParameter()->withParameters('itemDescription', 'Notebook Amarelo')->index(3);
-        $payment->addParameter()->withParameters('itemQuantity', '1')->index(3);
-        $payment->addParameter()->withParameters('itemAmount', '200.00')->index(3);
-
-//Add items by parameter using an array
-        $payment->addParameter()->withArray(['notificationURL', 'http://www.lojamodelo.com.br/nofitication']);
-
         $payment->setRedirectUrl("http://www.lojamodelo.com.br");
         $payment->setNotificationUrl("http://www.lojamodelo.com.br/nofitication");
 
-//Add discount
+        //Add a limit for installment
         $payment->addPaymentMethod()->withParameters(
-            PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
-            PagSeguro\Enum\PaymentMethod\Config\Keys::DISCOUNT_PERCENT,
-            10.00 // (float) Percent
+            \PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
+            \PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_LIMIT,
+            3 // (int) qty of installment
         );
 
-//Add installments with no interest
-        $payment->addPaymentMethod()->withParameters(
-            PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
-            PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_NO_INTEREST,
-            2 // (int) qty of installment
-        );
-
-//Add a limit for installment
-        $payment->addPaymentMethod()->withParameters(
-            PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
-            PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_LIMIT,
-            6 // (int) qty of installment
-        );
-
-// Add a group and/or payment methods name
+        // Add a group and/or payment methods name
         $payment->acceptPaymentMethod()->groups(
             \PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
-            \PagSeguro\Enum\PaymentMethod\Group::BALANCE
+            \PagSeguro\Enum\PaymentMethod\Group::BOLETO
         );
-        $payment->acceptPaymentMethod()->name(\PagSeguro\Enum\PaymentMethod\Name::DEBITO_ITAU);
-// Remove a group and/or payment methods name
-        $payment->excludePaymentMethod()->group(\PagSeguro\Enum\PaymentMethod\Group::BOLETO);
-
 
         try {
-
-            /**
-             * @todo For checkout with application use:
-             * \PagSeguro\Configuration\Configure::getApplicationCredentials()
-             *  ->setAuthorizationCode("FD3AF1B214EC40F0B0A6745D041BF50D")
-             */
             $result = $payment->register(
                 \PagSeguro\Configuration\Configure::getAccountCredentials()
             );
 
-            echo "<h2>Criando requisi&ccedil;&atilde;o de pagamento</h2>"
-                . "<p>URL do pagamento: <strong>$result</strong></p>"
-                . "<p><a title=\"URL do pagamento\" href=\"$result\" target=\_blank\">Ir para URL do pagamento.</a></p>";
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             die($e->getMessage());
         }
 
