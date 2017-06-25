@@ -5,6 +5,8 @@ services:
             - '%evirtua.payum.pagseguro.token%'
             - '%evirtua.payum.pagseguro.email%'
             - '%evirtua.payum.pagseguro.sandbox%'
+            - '%evirtua.payum.pagseguro.store_url%'
+            - '%evirtua.payum.pagseguro.notification_url%'
 
     evirtua.payum.action.capture:
         class: '%evirtua.payum.action.capture.class%'

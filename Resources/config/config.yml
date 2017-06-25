@@ -2,6 +2,8 @@ parameters:
     evirtua.payum.pagseguro.token: EDITME
     evirtua.payum.pagseguro.email: EDITME
     evirtua.payum.pagseguro.sandbox: true
+    evirtua.payum.pagseguro.store_url: EDITME
+    evirtua.payum.pagseguro.notification_url: EDITME
     evirtua.payum.api.pagseguro.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Api
     evirtua.payum.action.capture.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\CaptureAction
     evirtua.payum.action.status.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\StatusAction
