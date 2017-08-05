@@ -11,7 +11,9 @@ use Payum\Core\Request\Capture;
 use Payum\Core\Security\GenericTokenFactoryAwareInterface;
 use Payum\Core\Security\GenericTokenFactoryAwareTrait;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityToken;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Sylius\Component\Core\OrderCheckoutStates;
 
 class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface, GenericTokenFactoryAwareInterface
 {
@@ -39,25 +41,20 @@ class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface,
         /** @var PaymentInterface $payment */
         $payment = $request->getModel();
 
+        /** @var OrderInterface $order */
+        $order = $payment->getOrder();
+
         $notifyToken = $this->tokenFactory->createNotifyToken(
-          $request->getToken()->getGatewayName(),
-          $request->getToken()->getDetails()
+            $request->getToken()->getGatewayName(),
+            $request->getToken()->getDetails()
         );
 
-        $transaction = $this->api->createTransaction(
-            $payment->getAmount() / 100,
-            'Your order',
-            $request->getToken()->getAfterUrl(),
-            $notifyToken->getTargetUrl(),
-            $payment
-        );
+        $pagSeguroPaymentUrl = $this->api->createPaymentRequest($order, $request->getToken()->getAfterUrl(), $notifyToken->getTargetUrl());
 
-        $payment->setDetails(['transaction_id' => $transaction['transaction_id']]);
+        //$payment->setState(PaymentInterface::STATE_COMPLETED);
+        $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
 
-        $this->entityManager->persist($payment);
-        $this->entityManager->flush();
-
-        throw new HttpResponse(null, 302, ['Location' => $transaction['payment_url']]);
+        throw new HttpResponse(null, 302, ['Location' => $pagSeguroPaymentUrl]);
     }
 
     /**
@@ -69,7 +66,6 @@ class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface,
             $request instanceof Capture &&
             $request->getModel() instanceof PaymentInterface &&
             $request->getToken() instanceof PaymentSecurityToken &&
-            $request->getToken()->getGatewayName() === Configuration::GATEWAY_NAME
-        ;
+            $request->getToken()->getGatewayName() === Configuration::GATEWAY_NAME;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
-use Axelvnk\SyliusMolliePayumBundle\Payum\Api;
+use Evirtua\SyliusPagseguroPayumBundle\Payum\Api;
 use Payum\Core\Action\ActionInterface;
 use Payum\Core\ApiAwareInterface;
 use Payum\Core\Exception\UnsupportedApiException;

@@ -2,11 +2,8 @@
 
 namespace Evirtua\SyliusPagseguroPayumBundle\Payum;
 
-use PagSeguro\Configuration;
+use Mockery\Exception;
 use Sylius\Component\Core\Model\Order;
-use Sylius\Component\Core\Model\PaymentInterface;
-use Sylius\Component\Core\Model\Product;
-use Sylius\Component\Order\Model\OrderItem;
 
 class Api
 {
@@ -33,19 +30,35 @@ class Api
         $this->notificationUrl = $notificationUrl;
 
         \PagSeguro\Library::initialize();
-        \PagSeguro\Library::cmsVersion()->setName("Sylius")->setRelease("1.0.0@beta");
-        \PagSeguro\Library::moduleVersion()->setName("SyliusPagseguroPayumBundle")->setRelease("1.0.0");
+        //\PagSeguro\Library::cmsVersion()->setName("Sylius")->setRelease("1.0.0@beta");
+        //\PagSeguro\Library::moduleVersion()->setName("SyliusPagseguroPayumBundle")->setRelease("1.0.0");
+
+        \PagSeguro\Configuration\Configure::setEnvironment($this->sandbox ? 'sandbox' : 'production');//production or sandbox
         \PagSeguro\Configuration\Configure::setAccountCredentials($email, $token);
+        \PagSeguro\Configuration\Configure::setCharset('UTF-8');// UTF-8 or ISO-8859-1
+        \PagSeguro\Configuration\Configure::setLog(true, __DIR__ . '/../../../../var/logs/pagseguro.log');
+
+        try {
+            $sessionCode = \PagSeguro\Services\Session::create(
+                \PagSeguro\Configuration\Configure::getAccountCredentials()
+            );
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
     }
 
-    public function createPaymentRequest(Order $order)
+    public function createPaymentRequest(Order $order, $redirectUrl, $notifyUrl)
     {
+        //******************************************************************
+        //Email: c73899547364277788267@sandbox.pagseguro.com.br
+        //Senha: re13rv3w6N44p9M9
+        //cpf: 90723232709
+        // tid f53ea1b68e6f8202b41d47599c9b2112
+        //******************************************************************
 
         $payment = new \PagSeguro\Domains\Requests\Payment();
-        //TODO: Trocar por variaveis
-        $payment->setRedirectUrl("http://sylius.opalasjoias.com.br");
-        //TODO: Criar url para notificações
-        $payment->setNotificationUrl("http://sylius.opalajoias.com.br/pagseguro/nofitication");
+        $payment->setRedirectUrl($redirectUrl);
+        $payment->setNotificationUrl($notifyUrl);
 
         foreach ($order->getItems() as $item) {
             //$id, $description, $quantity, $amount, $weight = null, $shippingCost = null
@@ -53,51 +66,65 @@ class Api
                 $item->getProduct()->getId(),
                 $item->getProduct()->getName(),
                 $item->getQuantity(),
-                $item->getTotal()
+                $item->getUnitPrice() / 100
             );
         }
 
         $payment->setCurrency("BRL");
 
-        $payment->setExtraAmount(0);
+        //$payment->setExtraAmount(0.00);
 
         $payment->setReference($order->getNumber());
 
-        $payment->setRedirectUrl("http://sylius.opalasjoias.com.br");
+        //$payment->setRedirectUrl("http://sylius.opalasjoias.com.br");
 
         // Set your customer information.
         $payment->setSender()->setName($order->getCustomer()->getFullName());
         $payment->setSender()->setEmail($order->getCustomer()->getEmail());
+        $ddd = substr($order->getCustomer()->getPhoneNumber(), 0, 2);
+        $substrCount = strlen($order->getCustomer()->getPhoneNumber() == 11) ? -9 : -8;
+        $phone = substr($order->getCustomer()->getPhoneNumber(), $substrCount);
         $payment->setSender()->setPhone()->withParameters(
-            substr($order->getCustomer()->getPhoneNumber(), 0, 2),
-            $order->getCustomer()->getPhoneNumber()
+            $ddd,
+            $phone
         );
         $payment->setSender()->setDocument()->withParameters(
             'CPF',
             $order->getCustomer()->getCpf()
         );
 
-        $payment->setShipping()->setAddress()->withParameters(
-            $order->getCustomer()->getDefaultAddress()->getStreet(),
-            '1384',
-            'Jardim Paulistano',
-            '01452002',
-            'São Paulo',
-            'SP',
-            'BRA',
-            'apto. 114'
-        );
-        $payment->setShipping()->setCost()->withParameters(20.00);
-        $payment->setShipping()->setType()->withParameters(\PagSeguro\Enum\Shipping\Type::SEDEX);
+        $cep = str_replace('.', '', $order->getShippingAddress()->getPostcode());
+        $cep = str_replace('-', '', $cep);
 
-        $payment->setRedirectUrl("http://www.lojamodelo.com.br");
-        $payment->setNotificationUrl("http://www.lojamodelo.com.br/nofitication");
+        $payment->setShipping()->setAddress()->withParameters(
+            $order->getShippingAddress()->getStreet(),
+            $order->getShippingAddress()->getNumber(),
+            $order->getShippingAddress()->getNeighbourhood(),
+            $cep,
+            $order->getShippingAddress()->getCity(),
+            $order->getShippingAddress()->getProvinceName(),
+            $order->getShippingAddress()->getCountryCode(),
+            $order->getShippingAddress()->getComplements()
+        );
+
+        $shipmentType = \PagSeguro\Enum\Shipping\Type::NOT_SPECIFIED;
+
+        foreach ($order->getShipments() as $shipment) {
+            if (stripos($shipment->getMethod()->getName(), 'pac') !== false) {
+                $shipmentType = \PagSeguro\Enum\Shipping\Type::PAC;
+            } else if (stripos($shipment->getMethod()->getName(), 'sedex') !== false) {
+                $shipmentType = \PagSeguro\Enum\Shipping\Type::SEDEX;
+            }
+        }
+
+        $payment->setShipping()->setCost()->withParameters(round($order->getShippingTotal() / 100, 2));
+        $payment->setShipping()->setType()->withParameters($shipmentType);
 
         //Add a limit for installment
         $payment->addPaymentMethod()->withParameters(
             \PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
             \PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_LIMIT,
-            3 // (int) qty of installment
+            6 // (int) qty of installment
         );
 
         // Add a group and/or payment methods name
@@ -112,7 +139,7 @@ class Api
             );
 
         } catch (\Exception $e) {
-            die($e->getMessage());
+            //die('API 130 - ' . $e->getMessage());
         }
 
         return $result;
@@ -120,10 +147,19 @@ class Api
 
     /**
      * @param string $transactionId
-     * @return \stdClass
+     * @return string
      */
-    public function getTransactionData($transactionId)
+    public function getTransactionData($reference)
     {
-        return $this->client->payments->get($transactionId);
+
+        try {
+            return \PagSeguro\Services\Transactions\Search\Reference::search(
+                \PagSeguro\Configuration\Configure::getAccountCredentials(),
+                $reference,
+                ['initial_date' => date_format(new \DateTime(), 'Y-m-d\T00:00')]
+            );
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
     }
 }

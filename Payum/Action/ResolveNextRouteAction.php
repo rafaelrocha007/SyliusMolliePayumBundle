@@ -4,7 +4,13 @@ namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
 use Payum\Core\Action\ActionInterface;
 use Sylius\Bundle\PayumBundle\Request\ResolveNextRoute;
+use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\Payment;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Sylius\Component\Core\OrderCheckoutStates;
+use Sylius\Component\Core\OrderPaymentStates;
+use Sylius\Component\Core\OrderShippingStates;
 
 class ResolveNextRouteAction implements ActionInterface
 {
