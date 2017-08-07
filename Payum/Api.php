@@ -123,7 +123,7 @@ class Api
         //Add a limit for installment
         $payment->addPaymentMethod()->withParameters(
             \PagSeguro\Enum\PaymentMethod\Group::CREDIT_CARD,
-            \PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_LIMIT,
+            \PagSeguro\Enum\PaymentMethod\Config\Keys::MAX_INSTALLMENTS_NO_INTEREST,
             6 // (int) qty of installment
         );
 
@@ -139,6 +139,7 @@ class Api
             );
 
         } catch (\Exception $e) {
+            $result = 'https://www.opalasjoias.com.br/checkout/select-payment';
             //die('API 130 - ' . $e->getMessage());
         }
 
