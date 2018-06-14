@@ -52,25 +52,16 @@ imports:
 
 ```
 
-### Step 4 - Configure the bundle to use your Mollie API key
+### Step 4 - Include the bundle routing
 
 ``` yml
-// app/config/parameters.yml
+// app/config/routing.yml
 
-parameters:
-    evirtua.payum.pagseguro.token: YOUR_TOKEN
-    evirtua.payum.pagseguro.email: YOUR_EMAIL
-    evirtua.payum.pagseguro.sandbox: true|false
-
-```
-
-### Step 5 - Add gateway config to Sylius database
-This is just necessary to be able to select 'pagseguro' as a gateway for your payment methods through the admin interface. The config and factory name aren't even used, so don't worry about being correct.
+sylius_pagseguro_payum_bundle:
+    resource: "@SyliusPagseguroPayumBundle/Resources/config/routing.yml"
+    prefix:   /
 
 
-``` sql
-INSERT INTO `sylius_gateway_config` (`config`, `gateway_name`, `factory_name`)
-VALUES ('a:1:{s:5:\"token\";s:32:\"xxxxxxxxxxxxxxxxxxxxxxxxx\";}', 'pagseguro', 'evirtua_pagseguro');
 ```
 
 ## Modifying default behavior

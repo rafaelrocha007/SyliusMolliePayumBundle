@@ -3,6 +3,11 @@
 namespace Evirtua\SyliusPagseguroPayumBundle\Payum\Action;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Payum\Core\Action\ActionInterface;
+use Payum\Core\ApiAwareInterface;
+use Payum\Core\Exception\RequestNotSupportedException;
+use Payum\Core\GatewayAwareInterface;
+use Payum\Core\GatewayAwareTrait;
 use Payum\Core\Request\GetStatusInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityToken;
 use Sylius\Bundle\PayumBundle\Request\GetStatus;
@@ -10,8 +15,10 @@ use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\OrderCheckoutStates;
 
-class StatusAction extends BaseApiAwareAction
+final class StatusAction extends BaseApiAwareAction implements ActionInterface, GatewayAwareInterface, ApiAwareInterface
 {
+    use GatewayAwareTrait;
+
     /**
      * @var EntityManagerInterface
      */
@@ -30,6 +37,8 @@ class StatusAction extends BaseApiAwareAction
      */
     public function execute($request)
     {
+        RequestNotSupportedException::assertSupports($this, $request);
+
         $payment = $request->getModel();
 
         if ($payment instanceof PaymentSecurityToken) {
@@ -40,15 +49,21 @@ class StatusAction extends BaseApiAwareAction
             throw new \RuntimeException(sprintf('Payment with id "%s" was not found', $payment->getId()));
         }
 
-        $paymentDetails = $payment->getDetails();
+        //$paymentDetails = $payment->getDetails();
 
-        $transaction = $this->api->getTransactionData($payment->getOrder()->getNumber())->getTransactions()[0];
-//die(var_dump($transaction));
-        $paymentDetails['transaction_id'] = $transaction->getCode();
-        $payment->setDetails($paymentDetails);
+        $transaction = $this->api->getTransactionData($payment)->getTransactions()[0];
+//
+//        echo '<body><pre>', var_dump($this->api->getTransactionData($payment)), '</pre></body>';
+//        echo '<br/><br/><br/><br/>';
+//
+//        die();
 
-        $this->entityManager->persist($payment);
-        $this->entityManager->flush();
+//
+//        $paymentDetails['transaction_id'] = $transaction->getCode();
+//        $payment->setDetails($paymentDetails);
+//
+//        $this->entityManager->persist($payment);
+//        $this->entityManager->flush();
 
         switch ($transaction->getStatus()) {
 
@@ -61,7 +76,7 @@ class StatusAction extends BaseApiAwareAction
             // 7 Cancelada: a transação foi cancelada sem ter sido finalizada.
 
             case  1 :
-                $request->markNew();
+                $request->markPending();
                 break;
 
             case 2 :
@@ -69,7 +84,6 @@ class StatusAction extends BaseApiAwareAction
                 break;
 
             case 3:
-                $payment->setState(PaymentInterface::STATE_COMPLETED);
                 $request->markCaptured();
                 break;
 
@@ -100,6 +114,7 @@ class StatusAction extends BaseApiAwareAction
      */
     public function supports($request)
     {
+        //die('StatusAction');
         return $request instanceof GetStatusInterface;
     }
 }

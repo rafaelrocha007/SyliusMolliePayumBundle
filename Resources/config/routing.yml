@@ -1,0 +1,17 @@
+pagseguro_set_sender_hash:
+    path: /pag-seguro/{hash}/sender-hash
+    methods: [GET]
+    defaults:
+        _controller:  Evirtua\SyliusPagseguroPayumBundle\Controller\PagSeguroController::senderHashAction
+
+pagseguro_set_card_token:
+    path: /pag-seguro/{hash}/card-token
+    methods: [GET]
+    defaults:
+        _controller:  Evirtua\SyliusPagseguroPayumBundle\Controller\PagSeguroController::cardTokenAction
+
+pagseguro_notification:
+    path: /pagseguro/notification
+    methods: [POST]
+    defaults:
+        _controller:  Evirtua\SyliusPagseguroPayumBundle\Controller\PagSeguroController::notificationAction

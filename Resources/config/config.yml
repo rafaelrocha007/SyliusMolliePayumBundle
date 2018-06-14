@@ -1,24 +1,46 @@
-parameters:
-    evirtua.payum.pagseguro.token: EDITME
-    evirtua.payum.pagseguro.email: EDITME
-    evirtua.payum.pagseguro.sandbox: true
-    evirtua.payum.pagseguro.store_url: EDITME
-    evirtua.payum.pagseguro.notification_url: EDITME
-    evirtua.payum.api.pagseguro.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Api
-    evirtua.payum.action.capture.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\CaptureAction
-    evirtua.payum.action.status.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\StatusAction
-    evirtua.payum.action.notify.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\NotifyAction
-    evirtua.payum.action.resolve_next_route.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\ResolveNextRouteAction
+#parameters:
+#    evirtua.payum.pagseguro.token: EDITME
+#    evirtua.payum.pagseguro.email: EDITME
+#    evirtua.payum.pagseguro.sandbox: true
+#    evirtua.payum.pagseguro.store_url: EDITME
+#    evirtua.payum.pagseguro.notification_url: EDITME
+#    evirtua.payum.api.pagseguro.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Api
+#    evirtua.payum.action.capture.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\CaptureAction
+#    evirtua.payum.action.status.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\StatusAction
+#    evirtua.payum.action.notify.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\NotifyAction
+#    evirtua.payum.action.resolve_next_route.class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\ResolveNextRouteAction
 
 payum:
     gateways:
-        pagseguro:
+        pagseguro_cartao:
             factory: core
-            token: '%evirtua.payum.pagseguro.token%'
-            email: '%evirtua.payum.pagseguro.email%'
-            sandbox: true
+#            token: '%evirtua.payum.pagseguro.token%'
+#            email: '%evirtua.payum.pagseguro.email%'
+#            sandbox: '%evirtua.payum.pagseguro.sandbox%'
+            payum.api: '@evirtua.payum.api.pagseguro'
             payum.action.capture: '@evirtua.payum.action.capture'
             payum.action.notify: '@evirtua.payum.action.notify'
             payum.action.status: '@evirtua.payum.action.status'
             payum.action.resolve_next_route: '@evirtua.payum.action.resolve_next_route'
+
+        pagseguro_boleto:
+            factory: core
+#            token: '%evirtua.payum.pagseguro.token%'
+#            email: '%evirtua.payum.pagseguro.email%'
+#            sandbox: '%evirtua.payum.pagseguro.sandbox%'
             payum.api: '@evirtua.payum.api.pagseguro'
+            payum.action.capture: '@evirtua.payum.action.capture'
+            payum.action.notify: '@evirtua.payum.action.notify'
+            payum.action.status: '@evirtua.payum.action.status'
+            payum.action.resolve_next_route: '@evirtua.payum.action.resolve_next_route'
+
+        pagseguro_redirecionamento:
+            factory: core
+#            token: '%evirtua.payum.pagseguro.token%'
+#            email: '%evirtua.payum.pagseguro.email%'
+#            sandbox: '%evirtua.payum.pagseguro.sandbox%'
+            payum.api: '@evirtua.payum.api.pagseguro'
+            payum.action.capture: '@evirtua.payum.action.capture'
+            payum.action.notify: '@evirtua.payum.action.notify'
+            payum.action.status: '@evirtua.payum.action.status'
+            payum.action.resolve_next_route: '@evirtua.payum.action.resolve_next_route'

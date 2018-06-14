@@ -1,0 +1,133 @@
+{% if form.creditCard is defined %}
+    {{ form_row(form.creditCard.card) }}
+    {{ form_row(form.creditCard.holder) }}
+    <div class="three fields">
+        <div class="field">{{ form_row(form.creditCard.cvv) }}</div>
+        <div class="field">{{ form_row(form.creditCard.month) }}</div>
+        <div class="field">{{ form_row(form.creditCard.year) }}</div>
+    </div>
+    {{ form_row(form.creditCard.installments) }}
+    {{ form_row(form.creditCard.installmentAmount) }}
+
+    {% if form.creditCard.cpf is defined %}
+        {{ form_row(form.creditCard.cpf) }}
+        {{ form_row(form.creditCard.birthDate) }}
+    {% endif %}
+
+
+
+    <script type="text/javascript"
+            src="https://stc.sandbox.pagseguro.uol.com.br/pagseguro/api/v2/checkout/pagseguro.directpayment.js">
+    </script>
+
+    <script type="text/javascript">
+
+        PagSeguroDirectPayment.setSessionId('{{ app.session.get('pagseguro.session_id') }}');
+
+        var amount = {{ payment.amount / 100 }};
+        var form = document.getElementsByName('sylius_checkout_complete')[0];
+        var card = document.getElementsByName('sylius_checkout_complete[creditCard][card]')[0];
+        var cvv = document.getElementsByName('sylius_checkout_complete[creditCard][cvv]')[0];
+        var month = document.getElementsByName('sylius_checkout_complete[creditCard][month]')[0];
+        var year = document.getElementsByName('sylius_checkout_complete[creditCard][year]')[0];
+        var installments = document.getElementsByName('sylius_checkout_complete[creditCard][installments]')[0];
+        var installmentAmount = document.getElementsByName('sylius_checkout_complete[creditCard][installmentAmount]')[0];
+        var brand = '';
+        var installmentsPagSeguro = [];
+
+        card.onblur = function (event) {
+            //event.preventDefault();
+
+            PagSeguroDirectPayment.getBrand({
+                cardBin: card.value.replace(' ', ''),
+                success: function (response) {
+                    brand = response.brand.name;
+
+                    PagSeguroDirectPayment.getInstallments({
+                        amount: amount,
+                        brand: brand,
+                        maxInstallmentNoInterest: 3,
+                        success: function (response) {
+                            installments.innerHTML = '<option value="">Selecione o parcelamento</option>';
+                            installmentsPagSeguro = response.installments[brand];
+                            for (var i = 0; i < response.installments[brand].length; i++) {
+                                var parc = response.installments[brand][i];
+                                var juros = parc.interestFree ? 'Sem Juros' : 'Com Juros';
+                                installments.innerHTML += '<option value="' + parc.quantity + '">' + parc.quantity + 'x de ' + parc.installmentAmount + ' ' + juros + ' ( Total de R$' + parc.totalAmount + ')</option>';
+                            }
+                        },
+                        error: function (response) {
+                            //tratamento do erro
+                        },
+                        complete: function (response) {
+                            //tratamento comum para todas chamadas
+                        }
+                    });
+                },
+                error: function (response) {
+                },
+                complete: function (response) {
+                }
+            });
+        }
+
+        installments.onchange = function (event) {
+            console.log(event);
+            for (var i = 0; i < installmentsPagSeguro.length; i++) {
+                var parc = installmentsPagSeguro[i];
+                if (parc.quantity == event.target.value) {
+                    installmentAmount.value = parc.installmentAmount;
+                }
+                //installments.innerHTML += '<option value="' + parc.quantity + '">' + parc.quantity + 'x de ' + parc.installmentAmount + ' ' + juros + ' ( Total de R$' + parc.totalAmount + ')</option>';
+            }
+        }
+
+        if (card.value) {
+            card.onblur();
+        }
+
+        PagSeguroDirectPayment.onSenderHashReady(function (response) {
+            if (response.status == 'error') {
+                console.log(response.message);
+                return false;
+            }
+
+            var hash = response.senderHash;
+
+            var xmlHttp = new XMLHttpRequest();
+            // xmlHttp.onreadystatechange = function() {
+            //     if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            //         callback(xmlHttp.responseText);
+            // }
+            xmlHttp.open("GET", '/pag-seguro/' + hash + '/sender-hash', true); // true for asynchronous
+            xmlHttp.send(null);
+        });
+
+        form.onsubmit = function (event) {
+            //event.preventDefault();
+
+            var r = null;
+
+            PagSeguroDirectPayment.createCardToken({
+                cardNumber: card.value,
+                brand: brand,
+                cvv: cvv.value,
+                expirationMonth: month.value,
+                expirationYear: year.value,
+                success: function (response) {
+                    var xmlHttp = new XMLHttpRequest();
+                    xmlHttp.open("GET", '/pag-seguro/' + response.card.token + '/card-token', false); // true for asynchronous
+                    xmlHttp.send(null);
+                    r = true;
+                },
+                error: function () {
+                    r = false;
+                    card.value = '';
+                }
+            });
+
+            return r;
+        };
+
+    </script>
+{% endif %}

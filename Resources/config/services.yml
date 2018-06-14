@@ -1,33 +1,68 @@
 services:
     evirtua.payum.api.pagseguro:
-        class: '%evirtua.payum.api.pagseguro.class%'
+        class: 'Evirtua\SyliusPagseguroPayumBundle\Payum\Api'
         arguments:
-            - '%evirtua.payum.pagseguro.token%'
-            - '%evirtua.payum.pagseguro.email%'
-            - '%evirtua.payum.pagseguro.sandbox%'
-            - '%evirtua.payum.pagseguro.store_url%'
-            - '%evirtua.payum.pagseguro.notification_url%'
+            - '@session'
+#            - '%evirtua.payum.pagseguro.token%'
+#            - '%evirtua.payum.pagseguro.email%'
+#            - '%evirtua.payum.pagseguro.sandbox%'
+#            - '%evirtua.payum.pagseguro.store_url%'
+#            - '%evirtua.payum.pagseguro.notification_url%'
 
     evirtua.payum.action.capture:
-        class: '%evirtua.payum.action.capture.class%'
+        class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\CaptureAction
         arguments:
             - '@doctrine.orm.entity_manager'
         tags:
             - { name: evirtua_payum.action, action: capture }
 
     evirtua.payum.action.status:
-        class: '%evirtua.payum.action.status.class%'
+        class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\StatusAction
         arguments:
             - '@doctrine.orm.entity_manager'
         tags:
             - { name: evirtua_payum.action, action: status }
 
     evirtua.payum.action.notify:
-        class: '%evirtua.payum.action.notify.class%'
+        class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\NotifyAction
         tags:
             - { name: evirtua_payum.action, action: notify }
 
     evirtua.payum.action.resolve_next_route:
-        class: '%evirtua.payum.action.resolve_next_route.class%'
+        class: Evirtua\SyliusPagseguroPayumBundle\Payum\Action\ResolveNextRouteAction
+        arguments:
+            - '@doctrine.orm.entity_manager'
         tags:
             - { name: evirtua_payum.action, action: resolve_next_route }
+
+#    evirtua.payum.gateway_factory.pagseguro:
+#        class: Payum\Core\Bridge\Symfony\Builder\GatewayFactoryBuilder
+#        arguments: [Evirtua\SyliusPagseguroPayumBundle\PagSeguroGatewayFactory]
+#        tags:
+#            - { name: payum.gateway_factory_builder, factory: pagseguro }
+
+    evirtua.payum.form.type.pagseguro_gateway_configuration:
+        class: Evirtua\SyliusPagseguroPayumBundle\Form\Type\PagSeguroGatewayConfigurationType
+        tags:
+            - { name: sylius.gateway_configuration_type, type: pagseguro, label: "PagSeguro" }
+            - { name: form.type }
+
+    evirtua.payum.form.type.credit_card:
+        class: Evirtua\SyliusPagseguroPayumBundle\Form\Type\CreditCardType
+        arguments: ["@service_container", "@session"]
+        tags:
+            - { name: form.type }
+
+    evirtua.payum.form.type.boleto:
+        class: Evirtua\SyliusPagseguroPayumBundle\Form\Type\BoletoType
+        arguments: ["@service_container", "@session"]
+        tags:
+            - { name: form.type }
+
+    evirtua.payum.form.extension.complete_type:
+        class: Evirtua\SyliusPagseguroPayumBundle\Form\Extension\CompleteTypeExtension
+        tags:
+            - { name: form.type_extension, extended_type: Sylius\Bundle\CoreBundle\Form\Type\Checkout\CompleteType }
+
+    evirtua.pagseguro.controller:
+        class: Evirtua\SyliusPagseguroPayumBundle\Controller\PagSeguroController

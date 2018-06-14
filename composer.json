@@ -21,7 +21,7 @@
         "sylius/sylius": "^1.0@beta",
         "payum/payum": "^1.3",
         "payum/payum-bundle": "^2.1",
-        "pagseguro/pagseguro-php-sdk": "dev-master"
+        "pagseguro/pagseguro-php-sdk": "^4.2"
     },
     "autoload": {
         "psr-4": { "Evirtua\\SyliusPagseguroPayumBundle\\": "" }

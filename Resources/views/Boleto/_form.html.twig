@@ -1,0 +1,40 @@
+{% if form.boleto is defined %}
+
+    {% if form.boleto.cpf is defined %}
+        {{ form_row(form.boleto.cpf) }}
+    {% endif %}
+
+    <script type="text/javascript"
+            src="https://stc.sandbox.pagseguro.uol.com.br/pagseguro/api/v2/checkout/pagseguro.directpayment.js">
+    </script>
+
+    <script type="text/javascript">
+
+        PagSeguroDirectPayment.setSessionId('{{ app.session.get('pagseguro.session_id') }}');
+
+        var form = document.getElementsByName('sylius_checkout_complete')[0];
+
+        form.onsubmit = function (event) {
+            //event.preventDefault();
+
+            var r = null;
+
+            PagSeguroDirectPayment.onSenderHashReady(function (response) {
+                if (response.status == 'error') {
+                    console.log(response.message);
+                    r = false;
+                }
+
+                var hash = response.senderHash;
+
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open("GET", '/pag-seguro/' + hash + '/sender-hash', true); // true for asynchronous
+                xmlHttp.send(null);
+                r = true;
+            });
+
+            return r;
+        };
+
+    </script>
+{% endif %}
