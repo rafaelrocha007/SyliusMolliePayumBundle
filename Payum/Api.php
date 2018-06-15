@@ -318,22 +318,19 @@ class Api
             $result = $creditCard->register(
                 \PagSeguro\Configuration\Configure::getAccountCredentials()
             );
-
         } catch (\Exception $e) {
-            //die('API 315 - ' . $e->getMessage());
-            //throw $e;
             $order->setState(OrderInterface::STATE_CART);
             $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
-            $order->setShippingState(OrderShippingStates::STATE_READY);
-            $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+            $order->setShippingState(OrderShippingStates::STATE_CART);
+            $order->setPaymentState(OrderPaymentStates::STATE_CART);
+            $payment->setState(PaymentInterface::STATE_CART);
             $this->container->get('doctrine.orm.entity_manager')->merge($order);
+            $this->container->get('doctrine.orm.entity_manager')->merge($payment);
             $this->container->get('doctrine.orm.entity_manager')->flush();
             $xml = simplexml_load_string($e->getMessage());
             if ($xml)
                 $this->container->get('session')->getFlashBag()->add('error', $xml->error->code . ' - ' . $xml->error->message);
-            //$this->session->get('flash_bag')->add('error', $e->getMessage());
-            //return $e; //$result = 'https://www.opalasjoias.com.br/checkout/select-payment';
-            throw new HttpRedirect('/checkout/select-payment');
+            throw new HttpRedirect('/checkout/complete');
         }
 
         $this->session->set('pagseguro.credit_card', null);
@@ -352,6 +349,7 @@ class Api
 
         //Instantiate a new direct payment request, using Credit Card
         $configs = $this->getGatewayConfiguration($payment);
+        /** @var Order $order */
         $order = $payment->getOrder();
 
         $boleto = new \PagSeguro\Domains\Requests\DirectPayment\Boleto();
@@ -422,18 +420,19 @@ class Api
             $result = $boleto->register(
                 \PagSeguro\Configuration\Configure::getAccountCredentials()
             );
-
         } catch (\Exception $e) {
             $order->setState(OrderInterface::STATE_CART);
             $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
-            $order->setShippingState(OrderShippingStates::STATE_READY);
-            $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+            $order->setShippingState(OrderShippingStates::STATE_CART);
+            $order->setPaymentState(OrderPaymentStates::STATE_CART);
+            $payment->setState(PaymentInterface::STATE_CART);
             $this->container->get('doctrine.orm.entity_manager')->merge($order);
+            $this->container->get('doctrine.orm.entity_manager')->merge($payment);
             $this->container->get('doctrine.orm.entity_manager')->flush();
             $xml = simplexml_load_string($e->getMessage());
             if ($xml)
                 $this->container->get('session')->getFlashBag()->add('error', $xml->error->code . ' - ' . $xml->error->message);
-            throw new HttpRedirect('/checkout/select-payment');
+            throw new HttpRedirect('/checkout/complete');
         }
 
         $this->session->set('pagseguro.boleto', null);
