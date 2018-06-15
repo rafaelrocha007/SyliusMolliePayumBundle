@@ -2,8 +2,15 @@
 
 namespace Evirtua\SyliusPagseguroPayumBundle\Payum;
 
+use Payum\Core\Reply\HttpRedirect;
 use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Sylius\Component\Core\OrderCheckoutStates;
+use Sylius\Component\Core\OrderPaymentStates;
+use Sylius\Component\Core\OrderShippingStates;
+use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
 
 class Api
 {
@@ -13,6 +20,8 @@ class Api
     private $storeUrl;
     private $notificationUrl;
     private $session;
+    /** @var Container */
+    private $container;
 
     /**
      * Api constructor.
@@ -22,9 +31,10 @@ class Api
      * @param $storeUrl
      * @param $notificationUrl
      */
-    public function __construct($session)
+    public function __construct($session, $container)
     {
         $this->session = $session;
+        $this->container = $container;
 //    public function __construct($token, $email, $sandbox, $storeUrl, $notificationUrl, $session)
 //        die($token);
 //        $this->token = $token;
@@ -81,7 +91,7 @@ class Api
                 $item->getProduct()->getId(),
                 $item->getProduct()->getName(),
                 $item->getQuantity(),
-                number_format((float)($item->getUnitPrice() / 100), 2, '.', '')
+                number_format((float)($item->getDiscountedUnitPrice() / 100), 2, '.', '')
             );
         }
 
@@ -195,7 +205,7 @@ class Api
                 $item->getProduct()->getId(),
                 $item->getProduct()->getName(),
                 $item->getQuantity(),
-                number_format((float)($item->getUnitPrice() / 100), 2, '.', '')
+                number_format((float)($item->getDiscountedUnitPrice() / 100), 2, '.', '')
             );
         }
 
@@ -240,7 +250,6 @@ class Api
         $cep = str_replace('.', '', $order->getBillingAddress()->getPostcode());
         $cep = str_replace('-', '', $cep);
 
-
         $creditCard->setBilling()->setAddress()->withParameters(
             $order->getBillingAddress()->getStreet(),
             $order->getBillingAddress()->getNumber(),
@@ -275,6 +284,7 @@ class Api
             $this->session->get('pagseguro.credit_card')['installmentAmount'],
             3
         );
+
         // Set the credit card holder information
 
         if (isset($this->session->get('pagseguro.credit_card')['birthDate'])) {
@@ -310,9 +320,20 @@ class Api
             );
 
         } catch (\Exception $e) {
-            die('API 326 ' . $e->getMessage());
-            $result = 'https://www.opalasjoias.com.br/checkout/select-payment';
-            //die('API 130 - ' . $e->getMessage());
+            //die('API 315 - ' . $e->getMessage());
+            //throw $e;
+            $order->setState(OrderInterface::STATE_CART);
+            $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+            $order->setShippingState(OrderShippingStates::STATE_READY);
+            $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+            $this->container->get('doctrine.orm.entity_manager')->merge($order);
+            $this->container->get('doctrine.orm.entity_manager')->flush();
+            $xml = simplexml_load_string($e->getMessage());
+            if ($xml)
+                $this->container->get('session')->getFlashBag()->add('error', $xml->error->code . ' - ' . $xml->error->message);
+            //$this->session->get('flash_bag')->add('error', $e->getMessage());
+            //return $e; //$result = 'https://www.opalasjoias.com.br/checkout/select-payment';
+            throw new HttpRedirect('/checkout/select-payment');
         }
 
         $this->session->set('pagseguro.credit_card', null);
@@ -346,11 +367,11 @@ class Api
                 $item->getProduct()->getId(),
                 $item->getProduct()->getName(),
                 $item->getQuantity(),
-                number_format((float)($item->getUnitPrice() / 100), 2, '.', '')
+                number_format((float)($item->getDiscountedUnitPrice() / 100), 2, '.', '')
             );
         }
 
-        $boleto->setSender()->setName($order->getCustomer()->getFullName());
+        $boleto->setSender()->setName($order->getShippingAddress()->getFullName() ?? $order->getCustomer()->getFullName());
         $boleto->setSender()->setEmail($order->getCustomer()->getEmail());
         $phoneNumber = $order->getShippingAddress()->getPhoneNumber() ?? $order->getCustomer()->getPhoneNumber();
         $phoneNumber = preg_replace('/\D/', '', $phoneNumber);
@@ -403,9 +424,16 @@ class Api
             );
 
         } catch (\Exception $e) {
-            die('API 406 ' . $e->getMessage());
-            $result = 'https://www.opalasjoias.com.br/checkout/select-payment';
-            //die('API 130 - ' . $e->getMessage());
+            $order->setState(OrderInterface::STATE_CART);
+            $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+            $order->setShippingState(OrderShippingStates::STATE_READY);
+            $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+            $this->container->get('doctrine.orm.entity_manager')->merge($order);
+            $this->container->get('doctrine.orm.entity_manager')->flush();
+            $xml = simplexml_load_string($e->getMessage());
+            if ($xml)
+                $this->container->get('session')->getFlashBag()->add('error', $xml->error->code . ' - ' . $xml->error->message);
+            throw new HttpRedirect('/checkout/select-payment');
         }
 
         $this->session->set('pagseguro.boleto', null);
@@ -422,14 +450,43 @@ class Api
         $this->getGatewayConfiguration($payment);
         $reference = $payment->getOrder()->getNumber();
 
-        try {
-            return \PagSeguro\Services\Transactions\Search\Reference::search(
-                \PagSeguro\Configuration\Configure::getAccountCredentials(),
-                $reference,
-                ['initial_date' => date_format(new \DateTime(), 'Y-m-d\T00:00')]
-            );
-        } catch (Exception $e) {
-            die($e->getMessage());
+        $configs = $payment->getMethod()->getGatewayConfig()->getConfig();
+
+        //pagseguro-php-sdk começou a retornar incorretamente
+        //chamada feita via CURL
+//        try {
+//            return \PagSeguro\Services\Transactions\Search\Reference::search(
+//                \PagSeguro\Configuration\Configure::getAccountCredentials(),
+//                $reference,
+//                ['initial_date' => date_format(new \DateTime(), 'Y-01-01\T00:00')]
+//            );
+//        } catch (Exception $e) {
+//            die($e->getMessage());
+//        }
+
+
+        $url = 'https://ws.' . ($configs['environment'] == 'production' ? '' : 'sandbox.') .
+            'pagseguro.uol.com.br/v2/transactions' .
+            '?email=' . $configs['email'] . '&token=' . $configs['token'] . '&reference=' . $reference;
+
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($curl);
+        $http = curl_getinfo($curl);
+
+        if ($response == 'Unauthorized') {
+            return 'Unauthorized';
+        }
+
+        curl_close($curl);
+        $response = simplexml_load_string($response);
+
+        if ($response !== false) {
+            if (count($response->error) > 0) {
+                return $response->error->code . ' ' . $response->error->message;
+            }
+            return $response->transactions[0]->transaction;
         }
     }
 }

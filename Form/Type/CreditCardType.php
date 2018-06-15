@@ -199,6 +199,10 @@ final class CreditCardType extends AbstractType
                 $result = curl_exec($ch);
                 curl_close($ch);
 
+                if(!$result) {
+                    throw new \Exception('Não foi possível inciar a sessão de pagamento');
+                }
+
                 $xml = @simplexml_load_string($result);
                 $json = @json_encode($xml);
                 $array = @json_decode($json, TRUE);

@@ -33,7 +33,6 @@ class ResolveNextRouteAction implements ActionInterface
      */
     public function execute($request)
     {
-
         /** @var Payment $payment */
         $payment = $request->getModel();
 
@@ -48,9 +47,11 @@ class ResolveNextRouteAction implements ActionInterface
             $order->setCheckoutState(OrderCheckoutStates::STATE_COMPLETED);
             //$this->orderEmailManager->sendConfirmationEmail($order);
             $request->setRouteName('sylius_shop_order_thank_you');
+            $this->entityManager->merge($order);
 
             return;
         }
+
         $order->setState(OrderInterface::STATE_CART);
         $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
         $order->setShippingState(OrderShippingStates::STATE_READY);
@@ -58,7 +59,6 @@ class ResolveNextRouteAction implements ActionInterface
 
         $request->setRouteName('sylius_shop_checkout_complete');
 
-//        $request->setRouteName('sylius_shop_order_thank_you');
 //        /** @var PaymentInterface $payment */
 //        $payment = $request->getModel();
 //        if ($payment->getState() === PaymentInterface::STATE_COMPLETED) {

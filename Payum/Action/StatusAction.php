@@ -12,8 +12,10 @@ use Payum\Core\Request\GetStatusInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityToken;
 use Sylius\Bundle\PayumBundle\Request\GetStatus;
 use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\Payment;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\OrderCheckoutStates;
+use Sylius\Component\Core\OrderPaymentStates;
 
 final class StatusAction extends BaseApiAwareAction implements ActionInterface, GatewayAwareInterface, ApiAwareInterface
 {
@@ -49,23 +51,10 @@ final class StatusAction extends BaseApiAwareAction implements ActionInterface, 
             throw new \RuntimeException(sprintf('Payment with id "%s" was not found', $payment->getId()));
         }
 
-        //$paymentDetails = $payment->getDetails();
+        $order = $payment->getOrder();
+        $transaction = $this->api->getTransactionData($payment);
 
-        $transaction = $this->api->getTransactionData($payment)->getTransactions()[0];
-//
-//        echo '<body><pre>', var_dump($this->api->getTransactionData($payment)), '</pre></body>';
-//        echo '<br/><br/><br/><br/>';
-//
-//        die();
-
-//
-//        $paymentDetails['transaction_id'] = $transaction->getCode();
-//        $payment->setDetails($paymentDetails);
-//
-//        $this->entityManager->persist($payment);
-//        $this->entityManager->flush();
-
-        switch ($transaction->getStatus()) {
+        switch ($transaction->status) {
 
             // 1 Aguardando pagamento: o comprador iniciou a transação, mas até o momento o PagSeguro não recebeu nenhuma informação sobre o pagamento.
             // 2 Em análise: o comprador optou por pagar com um cartão de crédito e o PagSeguro está analisando o risco da transação.
@@ -77,32 +66,54 @@ final class StatusAction extends BaseApiAwareAction implements ActionInterface, 
 
             case  1 :
                 $request->markPending();
+                $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+                $payment->setState(Payment::STATE_PROCESSING);
                 break;
 
             case 2 :
                 $request->markPending();
+                $order->setPaymentState(OrderPaymentStates::STATE_AWAITING_PAYMENT);
+                $payment->setState(Payment::STATE_PROCESSING);
                 break;
 
             case 3:
                 $request->markCaptured();
+                $order->setPaymentState(OrderPaymentStates::STATE_PAID);
+                $payment->setState(Payment::STATE_COMPLETED);
                 break;
 
             case 4:
                 $request->markCaptured();
+                $order->setPaymentState(OrderPaymentStates::STATE_PAID);
+                $payment->setState(Payment::STATE_COMPLETED);
+                break;
+
+            case 5:
+                $request->markSuspended();
+                $order->setPaymentState(OrderPaymentStates::STATE_PARTIALLY_REFUNDED);
+                $payment->setState(Payment::STATE_REFUNDED);
                 break;
 
             case 6:
                 $request->markRefunded();
+                $order->setPaymentState(OrderPaymentStates::STATE_REFUNDED);
+                $payment->setState(Payment::STATE_REFUNDED);
                 break;
 
             case 7 :
                 $request->markCanceled();
+                $order->setPaymentState(OrderPaymentStates::STATE_CANCELLED);
+                $payment->setState(Payment::STATE_CANCELLED);
                 break;
 
             default:
                 $request->markUnknown();
                 break;
         }
+
+        $this->entityManager->merge($order);
+        $this->entityManager->merge($payment);
+        $this->entityManager->flush();
 
         if ($request->getModel() instanceof PaymentSecurityToken) {
             $request->setModel($payment);
@@ -114,7 +125,6 @@ final class StatusAction extends BaseApiAwareAction implements ActionInterface, 
      */
     public function supports($request)
     {
-        //die('StatusAction');
         return $request instanceof GetStatusInterface;
     }
 }

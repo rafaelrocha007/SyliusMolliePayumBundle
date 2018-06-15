@@ -3,6 +3,7 @@ services:
         class: 'Evirtua\SyliusPagseguroPayumBundle\Payum\Api'
         arguments:
             - '@session'
+            - '@service_container'
 #            - '%evirtua.payum.pagseguro.token%'
 #            - '%evirtua.payum.pagseguro.email%'
 #            - '%evirtua.payum.pagseguro.sandbox%'

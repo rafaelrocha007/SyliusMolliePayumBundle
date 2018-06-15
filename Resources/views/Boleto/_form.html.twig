@@ -28,7 +28,7 @@
                 var hash = response.senderHash;
 
                 var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open("GET", '/pag-seguro/' + hash + '/sender-hash', true); // true for asynchronous
+                xmlHttp.open("GET", '/pagseguro/' + hash + '/sender-hash', true); // true for asynchronous
                 xmlHttp.send(null);
                 r = true;
             });

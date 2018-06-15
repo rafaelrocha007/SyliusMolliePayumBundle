@@ -14,6 +14,7 @@ use Payum\Core\Request\Capture;
 use Payum\Core\Security\GenericTokenFactoryAwareInterface;
 use Payum\Core\Security\GenericTokenFactoryAwareTrait;
 use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\Payment;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\OrderCheckoutStates;
 
@@ -35,34 +36,6 @@ class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface,
     }
 
     /**
-     * @param Capture $request
-     */
-    public function execute2($request)
-    {
-        /* * @var PaymentInterface $payment */
-        die(twig_var_dump($request));
-        $payment = $request->getModel();
-
-        die(var_dump($payment->getOrder()));
-
-        /** @var OrderInterface $order */
-        $order = $payment->getOrder();
-
-        $notifyToken = $this->tokenFactory->createNotifyToken(
-            $request->getToken()->getGatewayName(),
-            $request->getToken()->getDetails()
-        );
-
-        $pagSeguroPaymentUrl = $this->api->createPaymentRequest($order, $request->getToken()->getAfterUrl(), $notifyToken->getTargetUrl());
-
-        $payment->setState(PaymentInterface::STATE_COMPLETED);
-        $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
-
-        //throw new HttpResponse(null, 302, ['Location' => $pagSeguroPaymentUrl]);
-        throw new HttpPostRedirect($payment->getCheckoutUrl());
-    }
-
-    /**
      * {@inheritdoc}
      *
      * @param Capture $request
@@ -77,7 +50,6 @@ class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface,
         $payment = $this->entityManager->find($request->getToken()->getDetails()->getClass(), $request->getToken()->getDetails()->getId());
         $order = $payment->getOrder();
         $gatewayConfigs = $payment->getMethod()->getGatewayConfig()->getConfig();
-
 
         /** @var TokenInterface $token */
         $token = $request->getToken();
@@ -100,13 +72,13 @@ class CaptureAction extends BaseApiAwareAction implements GatewayAwareInterface,
             $paymentStatus = $this->api->createPaymentRequest($payment, $token->getAfterUrl(), $notifyToken->getTargetUrl());
         }
 
-        $order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+        //$order->setCheckoutState(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
 
         $paymentDetails['transaction_id'] = $paymentStatus->getCode();
         $payment->setDetails($paymentDetails);
 
-        $this->entityManager->persist($order);
-        $this->entityManager->persist($payment);
+        $this->entityManager->merge($order);
+        $this->entityManager->merge($payment);
         $this->entityManager->flush();
 
         throw new HttpRedirect($request->getToken()->getAfterUrl());
