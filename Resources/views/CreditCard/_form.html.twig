@@ -15,7 +15,7 @@
     {% endif %}
 
     {% set env = payment.method.gatewayConfig.config['environment'] %}
-    {% set env = env == 'production' ? '':'sandbox.' %}
+    {% set env = (env == 'production' ? '':'sandbox.') %}
 
     <script type="text/javascript"
             src="https://stc.{{ env }}pagseguro.uol.com.br/pagseguro/api/v2/checkout/pagseguro.directpayment.js">
@@ -26,7 +26,7 @@
         PagSeguroDirectPayment.setSessionId('{{ app.session.get('pagseguro.session_id') }}');
 
         var amount = {{ (payment.amount / 100.00)|number_format(2, '.', '') }};
-        console.log('amount2', amount);
+
         var form = document.getElementsByName('sylius_checkout_complete')[0];
         var card = document.getElementsByName('sylius_checkout_complete[creditCard][card]')[0];
         var cvv = document.getElementsByName('sylius_checkout_complete[creditCard][cvv]')[0];
@@ -37,11 +37,13 @@
         var brand = '';
         var installmentsPagSeguro = [];
 
+        card.focus();
+
         card.onblur = function (event) {
-            //event.preventDefault();
+            event.preventDefault();
 
             PagSeguroDirectPayment.getBrand({
-                cardBin: card.value.replace(' ', ''),
+                cardBin: card.value.split(' ').join(''),
                 success: function (response) {
                     brand = response.brand.name;
 
@@ -89,7 +91,9 @@
         }
 
         PagSeguroDirectPayment.onSenderHashReady(function (response) {
-            if (response.status == 'error') {
+
+            if (!response || response.status == 'error') {
+                console.log(response);
                 console.log(response.message);
                 return false;
             }
@@ -101,7 +105,7 @@
             //     if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
             //         callback(xmlHttp.responseText);
             // }
-            xmlHttp.open("GET", '/pagseguro/' + hash + '/sender-hash', true); // true for asynchronous
+            xmlHttp.open("GET", '/pagseguro/' + hash + '/sender-hash', false); // true for asynchronous
             xmlHttp.send(null);
         });
 
@@ -111,7 +115,7 @@
             var r = null;
 
             PagSeguroDirectPayment.createCardToken({
-                cardNumber: card.value,
+                cardNumber: card.value.split(' ').join(''),
                 brand: brand,
                 cvv: cvv.value,
                 expirationMonth: month.value,
@@ -122,7 +126,8 @@
                     xmlHttp.send(null);
                     r = true;
                 },
-                error: function () {
+                error: function (response) {
+                    console.log(response);
                     r = false;
                     card.value = '';
                 }

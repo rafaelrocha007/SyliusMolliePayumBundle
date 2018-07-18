@@ -41,6 +41,7 @@ final class CompleteTypeExtension extends AbstractTypeExtension
         if (
             null !== $method &&
             null !== $method->getGatewayConfig() &&
+            isset($method->getGatewayConfig()->getConfig()['pagamento']) &&
             $method->getGatewayConfig()->getConfig()['pagamento'] === PagSeguroGatewayConfigurationType::CARTAO_CHECKOUT_TRANSPARENTE &&
             'pagseguro' === $method->getGatewayConfig()->getFactoryName()
         ) {
@@ -57,6 +58,7 @@ final class CompleteTypeExtension extends AbstractTypeExtension
         if (
             null !== $method &&
             null !== $method->getGatewayConfig() &&
+            isset($method->getGatewayConfig()->getConfig()['pagamento']) &&
             $method->getGatewayConfig()->getConfig()['pagamento'] === PagSeguroGatewayConfigurationType::BOLETO_CHECKOUT_TRANSPARENTE &&
             'pagseguro' === $method->getGatewayConfig()->getFactoryName()
         ) {

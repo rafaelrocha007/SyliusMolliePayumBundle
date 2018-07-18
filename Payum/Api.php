@@ -72,12 +72,6 @@ class Api
 
     public function createPaymentRequest(PaymentInterface $orderPayment, $redirectUrl, $notifyUrl)
     {
-        //******************************************************************
-        //Email: c73899547364277788267@sandbox.pagseguro.com.br
-        //Senha: re13rv3w6N44p9M9
-        //cpf: 90723232709
-        // tid f53ea1b68e6f8202b41d47599c9b2112
-        //******************************************************************
         $this->getGatewayConfiguration($orderPayment);
         $order = $orderPayment->getOrder();
 
