@@ -318,12 +318,13 @@ class Api
             $order->setShippingState(OrderShippingStates::STATE_CART);
             $order->setPaymentState(OrderPaymentStates::STATE_CART);
             $payment->setState(PaymentInterface::STATE_CART);
-            $this->container->get('doctrine.orm.entity_manager')->merge($order);
-            $this->container->get('doctrine.orm.entity_manager')->merge($payment);
-            $this->container->get('doctrine.orm.entity_manager')->flush();
+            $payment->setDetails(['error'=>$e->getMessage()]);
             $xml = simplexml_load_string($e->getMessage());
             if ($xml)
                 $this->container->get('session')->getFlashBag()->add('error', $xml->error->code . ' - ' . $xml->error->message);
+            $this->container->get('doctrine.orm.entity_manager')->merge($order);
+            $this->container->get('doctrine.orm.entity_manager')->merge($payment);
+            $this->container->get('doctrine.orm.entity_manager')->flush();
             throw new HttpRedirect('/checkout/complete');
         }
 
