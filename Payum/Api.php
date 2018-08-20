@@ -57,7 +57,7 @@ class Api
         \PagSeguro\Configuration\Configure::setEnvironment($configs['environment']);
         \PagSeguro\Configuration\Configure::setAccountCredentials($configs['email'], $configs['token']);
         \PagSeguro\Configuration\Configure::setCharset($configs['charset']);
-        \PagSeguro\Configuration\Configure::setLog(true, __DIR__ . '/../../../../var/logs/pagseguro.log');
+        \PagSeguro\Configuration\Configure::setLog(true, $_SERVER['DOCUMENT_ROOT']. '/var/logs/pagseguro.log');
 
         try {
             $sessionCode = \PagSeguro\Services\Session::create(
