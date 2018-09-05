@@ -17,27 +17,16 @@
 
         var form = document.getElementsByName('sylius_checkout_complete')[0];
 
-        form.onsubmit = function (event) {
-            //event.preventDefault();
+        PagSeguroDirectPayment.onSenderHashReady(function (response) {
+            if (response.status == 'error') {
+                console.log(response.message);
+            }
 
-            var r = null;
+            var hash = response.senderHash;
 
-            PagSeguroDirectPayment.onSenderHashReady(function (response) {
-                if (response.status == 'error') {
-                    console.log(response.message);
-                    r = false;
-                }
-
-                var hash = response.senderHash;
-
-                var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open("GET", '/pagseguro/' + hash + '/sender-hash', true); // true for asynchronous
-                xmlHttp.send(null);
-                r = true;
-            });
-
-            return r;
-        };
-
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open("GET", '/pagseguro/' + hash + '/sender-hash', false); // true for asynchronous
+            xmlHttp.send(null);
+        });
     </script>
 {% endif %}
